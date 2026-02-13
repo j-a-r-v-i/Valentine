@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Bansal Legacy</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Dancing+Script:wght@700&family=Montserrat:wght@200;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --rose: #ff2d55; --black: #050505; --bear: #8B4513; --glow: rgba(212, 175, 55, 0.6); }
+        body, html { margin: 0; padding: 0; background: var(--black); color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; height: 100vh; touch-action: manipulation; }
+        
+        /* LOADER */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 1.5s cubic-bezier(0.7, 0, 0.3, 1); }
+        .loader-txt { color: var(--gold); letter-spacing: 10px; font-size: 0.8rem; margin-bottom: 20px; font-family: 'Cinzel Decorative'; }
+        .load-bar { width: 220px; height: 1px; background: #222; position: relative; }
+        .load-fill { width: 0%; height: 100%; background: var(--gold); position: absolute; animation: fill 3.5s forwards; }
+        @keyframes fill { to { width: 100%; } }
+
+        #space-bg { position: fixed; inset: 0; z-index: 0; }
+        .vignette { position: fixed; inset: 0; background: radial-gradient(circle, transparent 10%, #000 95%); z-index: 1; pointer-events: none; }
+        .nebula { position: fixed; inset: 0; background: radial-gradient(circle at center, rgba(255,45,85,0.15) 0%, transparent 70%), radial-gradient(circle at 20% 30%, rgba(212,175,55,0.12) 0%, transparent 50%); z-index: -1; opacity: 0; transition: 3s; }
+
+        /* TEDDY DESIGN */
+        .teddy-container { height: 130px; position: relative; margin-bottom: 25px; z-index: 2000; }
+        .teddy { position: absolute; left: 50%; transform: translateX(-50%); width: 100px; height: 100px; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .head { width: 85px; height: 75px; background: var(--bear); border-radius: 50% 50% 45% 45%; position: relative; margin: 10px auto; border: 2px solid #6F370D; }
+        .eye { width: 11px; height: 11px; background: #111; border-radius: 50%; position: absolute; top: 32px; transition: 0.2s; }
+        .eye.left { left: 22px; } .eye.right { right: 22px; }
+        .blush { position: absolute; width: 15px; height: 10px; background: rgba(255, 45, 85, 0.4); border-radius: 50%; top: 48px; opacity: 0; transition: 0.5s; }
+        .mouth { width: 22px; height: 12px; border-bottom: 2px solid #333; border-radius: 50%; position: absolute; top: 50px; left: 50%; transform: translateX(-50%); transition: 0.2s; }
+        
+        .sad-active .eye { height: 2px !important; top: 40px !important; }
+        .sad-active .mouth { border-bottom: none !important; border-top: 2px solid #333 !important; top: 55px !important; }
+        @keyframes tremble { 0% { transform: translateX(-50.5%) translateY(1px); } 100% { transform: translateX(-49.5%) translateY(0px); } }
+
+        .dance { animation: victory 0.6s infinite alternate cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes victory { 0% { transform: translateX(-50%) translateY(0) rotate(-10deg); } 100% { transform: translateX(-50%) translateY(-40px) rotate(10deg) scale(1.1); } }
+
+        /* CARDS */
+        #universe { position: relative; z-index: 10; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(55px); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 50px; padding: 45px 25px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 50px 150px rgba(0,0,0,1); transition: 0.8s; }
+
+        .shimmer { background: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fcf6ba, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Cinzel Decorative'; font-weight: 900; background-size: 200%; animation: shine 3s infinite linear; }
+        @keyframes shine { to { background-position: 200%; } }
+
+        /* BUTTONS */
+        .btn-zone { position: relative; height: 160px; width: 100%; margin-top: 20px; }
+        .btn { padding: 18px 45px; border-radius: 60px; border: none; font-family: 'Cinzel Decorative'; font-weight: bold; cursor: pointer; position: absolute; transition: transform 0.2s, top 0.4s, left 0.4s; touch-action: none; }
+        #yes-btn { background: var(--rose); color: white; left: 50%; transform: translateX(-120%); z-index: 100; box-shadow: 0 0 30px var(--rose); }
+        #no-btn { background: #111; color: #666; left: 50%; transform: translateX(20%); z-index: 9999; border: 1px solid #222; }
+
+        /* MESMERIZING YES SCREEN */
+        #marriage-reveal { display: none; opacity: 0; transform: scale(0.2) rotateY(180deg); }
+        .all-hail { font-family: 'Cinzel Decorative'; font-size: 0.75rem; letter-spacing: 10px; color: var(--gold); margin: 0; }
+        .mrs-title { font-size: 2.5rem; margin: 10px 0 20px 0; text-shadow: 0 0 25px var(--glow); }
+        .timer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 25px 0; }
+        .timer-unit { background: linear-gradient(145deg, rgba(212,175,55,0.15), rgba(0,0,0,0.6)); border: 1px solid var(--gold); padding: 15px 5px; border-radius: 20px; }
+        .t-val { font-size: 1.5rem; color: var(--gold); font-weight: 900; display: block; }
+        .t-lab { font-size: 0.5rem; color: #ccc; letter-spacing: 2px; }
+        .vow-box { background: rgba(255,255,255,0.02); padding: 22px; border-radius: 25px; margin-top: 15px; border: 1px solid rgba(212,175,55,0.15); }
+        #dynamic-vow { font-family: 'Dancing Script'; font-size: 1.4rem; color: #fff; text-shadow: 0 0 10px var(--rose); transition: 0.5s; }
+
+        @keyframes god-shatter { to { transform: scale(12); opacity: 0; filter: blur(100px); } }
+    </style>
+</head>
+<body onload="initLoader()">
+
+    <div id="loader">
+        <div class="loader-txt">LULU ❤️ DOMI</div>
+        <div class="load-bar"><div class="load-fill"></div></div>
+    </div>
+
+    <div class="nebula" id="nebula"></div>
+    <canvas id="space-bg"></canvas>
+    <div class="vignette"></div>
+
+    <div id="universe">
+        <div id="proposal-card" class="card">
+            <div class="teddy-container">
+                <div id="teddy-wrapper" class="teddy">
+                    <div class="ear left"></div><div class="ear right"></div>
+                    <div class="head">
+                        <div class="blush" style="left:15px"></div><div class="blush" style="right:15px"></div>
+                        <div class="eye left"></div><div class="eye right"></div>
+                        <div class="mouth"></div>
+                    </div>
+                </div>
+            </div>
+            <h1 class="shimmer" style="font-size: 3rem; margin: 0;">DOMI</h1>
+            <p style="font-size: 0.6rem; letter-spacing: 6px; color: var(--gold); margin: 15px 0;">8 DAYS TO THE VOWS</p>
+            <h2 style="font-weight: 200; font-size: 1.2rem; color: #eee; margin-bottom: 30px;">Will you be my Valentine?</h2>
+            
+            <div class="btn-zone">
+                <button id="yes-btn" class="btn" onclick="theBansalEvent()">YES</button>
+                <button id="no-btn" class="btn" onmousedown="triggerChaos(event)" ontouchstart="triggerChaos(event)">NO ☹️</button>
+            </div>
+            <p style="font-family: 'Dancing Script'; font-size: 1.3rem; color: #444; margin-top: 25px;">- Always, Lulu</p>
+        </div>
+
+        <div id="marriage-reveal" class="card">
+            <div class="teddy-container" style="height: 100px;">
+                <div class="teddy dance" style="position:relative; margin:auto; transform: scale(1.1);">
+                    <div class="ear left"></div><div class="ear right"></div>
+                    <div class="head">
+                        <div class="blush" style="opacity:1; left:15px"></div><div class="blush" style="opacity:1; right:15px"></div>
+                        <div class="eye left" style="height:12px"></div><div class="eye right" style="height:12px"></div>
+                        <div class="mouth" style="width:25px"></div>
+                    </div>
+                </div>
+            </div>
+            <p class="all-hail">ALL HAIL THE QUEEN</p>
+            <h1 class="shimmer mrs-title">MRS. BANSAL</h1>
+            <div class="timer-grid">
+                <div class="timer-unit"><span class="t-val" id="d">00</span><span class="t-lab">DAYS</span></div>
+                <div class="timer-unit"><span class="t-val" id="h">00</span><span class="t-lab">HRS</span></div>
+                <div class="timer-unit"><span class="t-val" id="m">00</span><span class="t-lab">MINS</span></div>
+                <div class="timer-unit"><span class="t-val" id="s">00</span><span class="t-lab">SECS</span></div>
+            </div>
+            <div class="vow-box"><p id="dynamic-vow">"The Bansal legacy begins with you."</p></div>
+            <button class="btn" style="position: relative; transform: none; left: 0; width: 100%; margin-top: 20px; background: linear-gradient(45deg, var(--gold), #fcf6ba); color: #000; border: none; box-shadow: 0 0 20px var(--gold);" onclick="rotateVow()">Lulu's Eternal Vow</button>
+        </div>
+    </div>
+
+    <script>
+        function initLoader() {
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').remove(), 1500);
+            }, 3000);
+        }
+
+        let noMoves = 0;
+        let yesScale = 1;
+        const emojis = ["☹️", "😢", "😭", "💔", "🥀", "🥺", "😖", "😫", "😵‍💫", "🪦"];
+        const vows = ["I'll spend my whole life making you smile. ❤️", "Mrs. Bansal, you're my queen forever. 💍", "I'll be waiting at the Mandap for you. ✨", "You are my home, my heart, and my life. 🧸"];
+        let vowIndex = 0;
+
+        function triggerChaos(e) {
+            e.preventDefault();
+            const no = document.getElementById('no-btn');
+            const yes = document.getElementById('yes-btn');
+            const teddy = document.getElementById('teddy-wrapper');
+            const universe = document.getElementById('universe');
+            
+            noMoves++;
+            teddy.classList.add('sad-active');
+            teddy.style.animation = `tremble ${0.2 / noMoves}s infinite`;
+            no.innerHTML = `NO ${emojis[Math.min(noMoves, emojis.length-1)]}`;
+
+            // NO-FLY ZONE: Avoid Teddy (Top Center)
+            const pad = 60;
+            const spots = [
+                {x: pad, y: pad}, {x: window.innerWidth - 160, y: pad}, // Top corners
+                {x: pad, y: window.innerHeight - 150}, {x: window.innerWidth - 160, y: window.innerHeight - 150}, // Bottom corners
+                {x: pad, y: window.innerHeight/2}, {x: window.innerWidth - 160, y: window.innerHeight/2} // Middle sides
+            ];
+            const spot = spots[Math.floor(Math.random() * spots.length)];
+            
+            no.style.position = 'fixed';
+            no.style.left = spot.x + 'px';
+            no.style.top = spot.y + 'px';
+            no.style.transform = 'none';
+
+            yesScale += 0.55;
+            yes.style.transform = `translateX(-50%) scale(${yesScale})`;
+            yes.style.left = "50%";
+            universe.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
+
+            if(noMoves >= 10) no.style.display = 'none';
+        }
+
+        function theBansalEvent() {
+            const card1 = document.getElementById('proposal-card');
+            const nebula = document.getElementById('nebula');
+            
+            // Start Mesmerizing Transition
+            card1.style.animation = 'god-shatter 1.5s forwards';
+            nebula.style.opacity = '1';
+
+            setTimeout(() => {
+                card1.style.display = 'none';
+                const card2 = document.getElementById('marriage-reveal');
+                card2.style.display = 'block';
+                
+                // Cinematic Entrance
+                setTimeout(() => { 
+                    card2.style.opacity = '1'; 
+                    card2.style.transform = 'scale(1) rotateY(0deg)'; 
+                }, 100);
+
+                // Infinite Celebration
+                const end = Date.now() + 20000;
+                (function frame() {
+                    confetti({ particleCount: 7, angle: 60, spread: 60, origin: { x: 0 }, colors: ['#d4af37', '#ff2d55'] });
+                    confetti({ particleCount: 7, angle: 120, spread: 60, origin: { x: 1 }, colors: ['#d4af37', '#ff2d55'] });
+                    if (Date.now() < end) requestAnimationFrame(frame);
+                }());
+                startClock();
+            }, 1000);
+        }
+
+        function rotateVow() {
+            const vowText = document.getElementById('dynamic-vow');
+            vowText.style.opacity = 0;
+            setTimeout(() => {
+                vowText.innerHTML = vows[vowIndex];
+                vowIndex = (vowIndex + 1) % vows.length;
+                vowText.style.opacity = 1;
+                confetti({ particleCount: 40, shapes: ['heart'], colors: ['#ff2d55', '#d4af37'] });
+            }, 400);
+        }
+
+        function startClock() {
+            const target = new Date("Feb 21, 2026 00:00:00").getTime();
+            setInterval(() => {
+                const diff = target - new Date().getTime();
+                document.getElementById('d').innerText = Math.floor(diff / 86400000);
+                document.getElementById('h').innerText = Math.floor((diff % 86400000) / 3600000);
+                document.getElementById('m').innerText = Math.floor((diff % 3600000) / 60000);
+                document.getElementById('s').innerText = Math.floor((diff % 60000) / 1000);
+            }, 1000);
+        }
+
+        // Space Canvas
+        const canvas = document.getElementById('space-bg');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const stars = Array(150).fill().map(() => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, o: Math.random() }));
+        function draw() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            stars.forEach(s => { 
+                ctx.fillStyle = `rgba(212, 175, 55, ${s.o})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); 
+                s.y += 0.25; if(s.y > canvas.height) s.y = 0;
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>
